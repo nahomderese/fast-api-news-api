@@ -44,8 +44,8 @@ class Settings(BaseSettings):
         description="Google Gemini API key for AI services"
     )
     gemini_model: str = Field(
-        default="gemini-1.5-flash",
-        description="Gemini model to use (gemini-1.5-flash, gemini-1.5-pro, gemini-pro, etc.)"
+        default="gemini-2.5-flash",
+        description="Gemini model to use (gemini-2.5-flash, gemini-1.5-pro, gemini-pro, etc.)"
     )
     use_mock_ai: bool = Field(
         default=True,
