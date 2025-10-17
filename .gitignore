@@ -7,6 +7,7 @@ __pycache__/
 env/
 .venv/
 ENV/
+.mise.toml
 env.bak/
 venv.bak/
 build/
