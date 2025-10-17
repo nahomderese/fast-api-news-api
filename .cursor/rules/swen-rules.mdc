@@ -1,0 +1,28 @@
+---
+description: for making sure the ouput json of the api adheres to the requirement
+alwaysApply: false
+---
+
+the API must return a single, valid JSON object with exactly these fields no more not less:
+● id → string (UUID)
+● title → string
+● body → string (original article text)
+● summary → string
+● tags → array of strings
+● relevance_score → number (0.0–1.0)
+● source_url → string
+● publisher → string
+● published_at → string (ISO 8601)
+● ingested_at → string (ISO 8601)
+● media → object containing:
+● featured_image_url → string (real, working image URL)
+● related_video_url → string (real, working video URL)
+● media_justification → string (Qwen-generated rationale)
+● context → object containing:
+● wikipedia_snippet → string
+● social_sentiment → string
+● search_trend → string
+● geo → object with:
+● lat → number
+● lng → number
+● map_url → string

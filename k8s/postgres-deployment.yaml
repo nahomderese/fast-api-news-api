@@ -1,0 +1,110 @@
+# PostgreSQL StatefulSet for persistent database storage
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  labels:
+    app: swen-postgres
+data:
+  POSTGRES_DB: "swen_news"
+  POSTGRES_USER: "swen_user"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swen-postgres
+  labels:
+    app: swen-postgres
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: swen-postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: swen-postgres
+  labels:
+    app: swen-postgres
+spec:
+  serviceName: swen-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swen-postgres
+  template:
+    metadata:
+      labels:
+        app: swen-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:17-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: db-password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+      # Uncomment and specify storageClassName for cloud providers:
+      # storageClassName: "gp3"  # AWS EBS gp3
+      # storageClassName: "standard"  # GCP Standard PD
+      # storageClassName: "alicloud-disk-efficiency"  # Alibaba Cloud

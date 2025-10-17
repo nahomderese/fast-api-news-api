@@ -1,0 +1,27 @@
+# Core FastAPI dependencies
+fastapi==0.115.0
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# HTTP client for API calls and image downloading
+httpx>=0.28.1,<1.0.0
+
+# Google Generative AI SDK for Gemini integration
+google-genai==1.45.0
+
+# Type hints support
+typing-extensions>=4.11,<5
+
+# Python environment support
+python-dotenv==1.0.0
+
+# Database support (PostgreSQL)
+sqlalchemy==2.0.23
+asyncpg==0.29.0
+alembic==1.13.0
+databases[postgresql]
+
+# Testing dependencies
+pytest==7.4.3
+pytest-asyncio==0.21.1

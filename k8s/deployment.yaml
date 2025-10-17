@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swen-ai-pipeline
+  labels:
+    app: swen-ai-pipeline
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: swen-ai-pipeline
+  template:
+    metadata:
+      labels:
+        app: swen-ai-pipeline
+        version: v1
+    spec:
+      containers:
+      - name: api
+        image: swen-ai-pipeline:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: USE_MOCK_AI
+          value: "true"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: PORT
+          value: "8000"
+        # AI Service Configuration (uncomment when using real Gemini API)
+        # - name: GEMINI_API_KEY
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: swen-secrets
+        #       key: gemini-api-key
+        # - name: GEMINI_MODEL
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: swen-secrets
+        #       key: gemini-model
+        # Database Configuration
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: db-port
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: db-name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: db-password
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: swen-secrets
+              key: database-url
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swen-ai-pipeline
+  labels:
+    app: swen-ai-pipeline
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: swen-ai-pipeline
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: swen-ai-pipeline-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: swen-ai-pipeline
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
