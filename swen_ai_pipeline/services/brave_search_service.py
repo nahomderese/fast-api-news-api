@@ -148,8 +148,15 @@ class BraveSearchService:
         Returns:
             Dictionary containing query, image_url, and video_url
         """
-        # Search for both images and videos in parallel (with country-specific results)
+        import asyncio
+        
+        # Search for images first
         image_result = await self.search_images(query)
+        
+        # Wait at least 2 seconds before searching for videos to avoid rate limiting
+        await asyncio.sleep(2.0)
+        
+        # Then search for videos
         video_result = await self.search_videos(query)
         
         return {
