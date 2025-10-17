@@ -5,7 +5,7 @@ __pycache__/
 *.so
 .Python
 env/
-venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
@@ -26,6 +26,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.cursor/
 MANIFEST
 
 # PyInstaller
