@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: swen-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-swen_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-swen_news}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-swen_user} -d ${POSTGRES_DB:-swen_news}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - swen-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swen-ai-pipeline
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      USE_MOCK_AI: ${USE_MOCK_AI:-false}
+      HOST: ${HOST:-0.0.0.0}
+      PORT: ${PORT:-8000}
+      DATABASE_URL: ${DATABASE_URL}
+      BRAVE_API_KEY: ${BRAVE_API_KEY}
+      BRAVE_IMAGE_SEARCH_URL: ${BRAVE_IMAGE_SEARCH_URL}
+      BRAVE_VIDEO_SEARCH_URL: ${BRAVE_VIDEO_SEARCH_URL}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-swen_news}
+      DB_USER: ${DB_USER:-swen_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+    volumes:
+      - ./swen_ai_pipeline:/app/swen_ai_pipeline
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - swen-network
+
+networks:
+  swen-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
